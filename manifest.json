@@ -3,6 +3,8 @@
   "name": "CPU Rank Finder (PassMark)",
   "version": "1.0.0",
   "description": "Finds CPU model names on a page and shows their PassMark CPU Benchmark rank, per-site toggle.",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html",
     "default_title": "CPU Rank Finder"
