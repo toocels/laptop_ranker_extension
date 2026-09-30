@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "CPU Rank Finder (PassMark)",
+  "version": "1.0.0",
+  "description": "Finds CPU model names on a page and shows their PassMark CPU Benchmark rank, per-site toggle.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "CPU Rank Finder"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["data/cpu-data.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
