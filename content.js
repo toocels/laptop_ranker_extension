@@ -6,6 +6,11 @@
   const BADGE_CLASS = 'cpu-rank-ext-badge';
   const STOPWORDS = new Set(['intel', 'amd', 'apple', 'core', 'processor', 'cpu']);
   const MAX_WINDOW = 4;
+  // Marketing filler that sits between the real model tokens on e-commerce listings,
+  // e.g. "Core i5 13th Gen 13420H" or "Core 5 Series 3 315" -- stripped so the
+  // remaining tokens ("i5","13420H" / "5","315") sit adjacent for window matching.
+  const ORDINAL_RE = /^\d{1,2}(st|nd|rd|th)$/;
+  const GEN_RE = /^gen(eration)?$/;
 
   const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'INPUT', 'SELECT']);
 
@@ -43,12 +48,31 @@
     return tokens;
   }
 
+  // Drops "Series N" pairs and "13th"/"Gen" filler so the significant tokens used
+  // for window matching sit next to each other even when a listing title inserts
+  // generation marketing between the brand tier and the model number.
+  function significantTokens(tokens) {
+    const sig = [];
+    let afterSeries = false;
+    for (const t of tokens) {
+      const low = t.text.toLowerCase();
+      if (afterSeries && /^\d{1,2}$/.test(low)) {
+        afterSeries = false;
+        continue;
+      }
+      afterSeries = low === 'series';
+      if (low === 'series' || GEN_RE.test(low) || ORDINAL_RE.test(low)) continue;
+      sig.push(t);
+    }
+    return sig;
+  }
+
   function makeBadge(match) {
     const span = document.createElement('span');
     span.className = BADGE_CLASS;
     span.style.color = '#d00000';
     span.style.fontWeight = 'bold';
-    span.textContent = ` (${match.name}, PassMark rank #${match.rank} of ${self.CPU_DATA_TOTAL}) `;
+    span.textContent = ` (${match.name}, PassMark rank #${match.rank}) `;
     return span;
   }
 
