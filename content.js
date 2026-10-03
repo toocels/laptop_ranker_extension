@@ -80,7 +80,9 @@
     const text = node.nodeValue;
     if (!text || text.trim().length < 2) return;
 
-    const tokens = tokenizeWithPositions(text);
+    const rawTokens = tokenizeWithPositions(text);
+    if (!rawTokens.length) return;
+    const tokens = significantTokens(rawTokens);
     if (!tokens.length) return;
 
     const frag = document.createDocumentFragment();
