@@ -79,4 +79,15 @@ assert.ok(m && m.rank === 744, `hyphenated i7-13700H -> ${JSON.stringify(m)}`);
 m = findFirstMatch('Just some regular text about a laptop bag.');
 assert.strictEqual(m, null, `expected no match, got ${JSON.stringify(m)}`);
 
+// Real listing titles that broke the original contiguous-window matcher: "Series N"
+// and "Nth Gen" sit between the brand tier and the model number.
+m = findFirstMatch('HP Omnibook 3 Next Gen AI PC, 2K OLED Intel Core 5 Series 3 315 - (12 GB/512 GB SSD/Windows 11 Home) 14-ht0242TU Laptop');
+assert.ok(m && m.name === 'Intel Core 5 315' && m.rank === 1385, `Core 5 Series 3 315 -> ${JSON.stringify(m)}`);
+
+m = findFirstMatch('MSI Katana 15 Intel Core i5 13th Gen 13420H - (16 GB/1 TB SSD/Windows 11 Home)');
+assert.ok(m && m.name === 'Intel Core i5-13420H' && m.rank === 1255, `i5 13th Gen 13420H -> ${JSON.stringify(m)}`);
+
+m = findFirstMatch('ASUS Vivobook 14 (2025) with Office 2024 + M365 Basic*, Backlit Keyboard, Intel Core Ultra 5 225H - (16 GB/512 GB SSD/Windows 11 Home)');
+assert.ok(m && m.name === 'Intel Core Ultra 5 225H' && m.rank === 647, `Core Ultra 5 225H -> ${JSON.stringify(m)}`);
+
 console.log('all matcher self-checks passed');
