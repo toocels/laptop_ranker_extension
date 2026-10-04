@@ -9,6 +9,8 @@ const self = { CPU_DATA: JSON.parse(jsonMatch[1]) };
 
 const STOPWORDS = new Set(['intel', 'amd', 'apple', 'core', 'processor', 'cpu']);
 const MAX_WINDOW = 4;
+const ORDINAL_RE = /^\d{1,2}(st|nd|rd|th)$/;
+const GEN_RE = /^gen(eration)?$/;
 
 function normalize(str) {
   const cleaned = str.replace(/@\s*[\d.]+\s*ghz/gi, '');
@@ -35,8 +37,24 @@ function tokenize(text) {
   return tokens;
 }
 
+function significantTokens(rawTokens) {
+  const sig = [];
+  let afterSeries = false;
+  for (const t of rawTokens) {
+    const low = t.toLowerCase();
+    if (afterSeries && /^\d{1,2}$/.test(low)) {
+      afterSeries = false;
+      continue;
+    }
+    afterSeries = low === 'series';
+    if (low === 'series' || GEN_RE.test(low) || ORDINAL_RE.test(low)) continue;
+    sig.push(t);
+  }
+  return sig;
+}
+
 function findFirstMatch(text) {
-  const tokens = tokenize(text);
+  const tokens = significantTokens(tokenize(text));
   for (let i = 0; i < tokens.length; i++) {
     const maxLen = Math.min(MAX_WINDOW, tokens.length - i);
     for (let len = maxLen; len >= 1; len--) {
