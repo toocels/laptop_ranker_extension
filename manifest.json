@@ -6,8 +6,10 @@
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["<all_urls>"],
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "CPU Rank Finder"
+    "default_title": "CPU Rank Finder - click to toggle on this site"
+  },
+  "background": {
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
