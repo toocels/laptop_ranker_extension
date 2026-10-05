@@ -30,3 +30,20 @@ chrome.action.onClicked.addListener(async (tab) => {
 
   await setBadge(tab.id, nowEnabled);
 });
+
+// Keep the badge in sync when the user switches tabs or a tab finishes loading.
+async function refreshBadge(tabId, url) {
+  if (!url || !/^https?:/.test(url)) return;
+  const host = new URL(url).hostname;
+  const { [STORAGE_KEY]: sites = {} } = await chrome.storage.local.get([STORAGE_KEY]);
+  await setBadge(tabId, !!sites[host]);
+}
+
+chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+  const tab = await chrome.tabs.get(tabId);
+  refreshBadge(tabId, tab.url);
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete') refreshBadge(tabId, tab.url);
+});
