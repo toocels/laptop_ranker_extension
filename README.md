@@ -38,6 +38,15 @@ The dataset is a hardcoded snapshot of
 - `test_matcher.mjs` -- `node test_matcher.mjs`, self-check for the
   matching logic.
 
+## Limitations
+
+- One-time scan on enable/page-load -- no `MutationObserver`, so CPU names
+  injected into the DOM afterwards (SPA navigation, infinite scroll) aren't
+  picked up until you re-toggle.
+- Apple M-series rarely matches: PassMark names them with core-count/clock
+  suffixes (e.g. `Apple M2 Pro 10 Core 3480 MHz`), which plain text like
+  "M2 Pro" can't disambiguate.
+
 ## License
 
 GPL-3.0-or-later, see [LICENSE](LICENSE).
