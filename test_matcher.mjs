@@ -25,6 +25,7 @@ function normalize(str) {
 
 const index = new Map();
 for (const [name, mark, rank] of self.CPU_DATA) {
+  if (/[^\x00-\x7F]/.test(name)) continue;
   const key = normalize(name);
   if (key && !index.has(key)) index.set(key, { name, mark, rank });
 }
@@ -89,5 +90,11 @@ assert.ok(m && m.name === 'Intel Core i5-13420H' && m.rank === 1255, `i5 13th Ge
 
 m = findFirstMatch('ASUS Vivobook 14 (2025) with Office 2024 + M365 Basic*, Backlit Keyboard, Intel Core Ultra 5 225H - (16 GB/512 GB SSD/Windows 11 Home)');
 assert.ok(m && m.name === 'Intel Core Ultra 5 225H' && m.rank === 647, `Core Ultra 5 225H -> ${JSON.stringify(m)}`);
+
+// Non-ASCII CPU names (e.g. "天玑900") must not be indexed: normalize() strips
+// their script entirely, which would otherwise collapse the name to a bare
+// number and false-positive on any price or spec digit on the page.
+m = findFirstMatch('Price, product page₹79,900 M.R.P: ₹89,900 (11% off)');
+assert.strictEqual(m, null, `bare price should not match a CPU, got ${JSON.stringify(m)}`);
 
 console.log('all matcher self-checks passed');
