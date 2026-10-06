@@ -32,6 +32,10 @@
     const map = new Map();
     // ponytail: first match wins on duplicate normalized keys (rare), good enough.
     for (const [name, mark, rank] of self.CPU_DATA) {
+      // Skip names with non-ASCII characters (e.g. "天玑900"): normalize() strips
+      // them entirely, which can collapse a name down to a bare number like "900"
+      // that then matches any price/spec digit on the page.
+      if (/[^\x00-\x7F]/.test(name)) continue;
       const key = normalize(name);
       if (key && !map.has(key)) map.set(key, { name, mark, rank });
     }
