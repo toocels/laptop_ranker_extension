@@ -1,5 +1,5 @@
 // Scans visible page text for CPU model names and tags them with their
-// PassMark cpu-list/all rank. Runs only on sites the user enabled via the popup.
+// PassMark cpu-list/all rank. Runs only on sites the user enabled via the toolbar icon.
 
 (function () {
   const STORAGE_KEY = 'cpuRankEnabledSites';
@@ -16,6 +16,7 @@
 
   let cpuIndex = null; // Map<normalizedKey, {name, mark, rank}>
   let scanned = false;
+  let observer = null;
 
   function normalize(str) {
     const cleaned = str.replace(/@\s*[\d.]+\s*ghz/gi, '');
@@ -80,7 +81,20 @@
     return span;
   }
 
+  // Text nodes we create below still contain the raw matched substring verbatim
+  // (the badge is appended after, original text is left alone) -- the mutation
+  // observer reports them as "added" nodes, so without this guard they'd get
+  // rescanned, matched again, and badged again forever.
+  const ownNodes = new WeakSet();
+
+  function makeText(str) {
+    const t = document.createTextNode(str);
+    ownNodes.add(t);
+    return t;
+  }
+
   function processTextNode(node) {
+    if (ownNodes.has(node)) return;
     const text = node.nodeValue;
     if (!text || text.trim().length < 2) return;
 
@@ -110,7 +124,7 @@
 
       if (matched) {
         const windowEnd = tokens[i + matchLen - 1].end;
-        frag.appendChild(document.createTextNode(text.slice(cursor, windowEnd)));
+        frag.appendChild(makeText(text.slice(cursor, windowEnd)));
         frag.appendChild(makeBadge(matched));
         cursor = windowEnd;
         i += matchLen;
@@ -121,32 +135,93 @@
     }
 
     if (!found) return;
-    frag.appendChild(document.createTextNode(text.slice(cursor)));
+    frag.appendChild(makeText(text.slice(cursor)));
+    if (!node.parentNode) return; // detached since the mutation that triggered this scan
     node.parentNode.replaceChild(frag, node);
+  }
+
+  function acceptTextNode(n) {
+    const parent = n.parentElement;
+    if (!parent) return NodeFilter.FILTER_REJECT;
+    if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+    if (parent.closest(`.${BADGE_CLASS}`)) return NodeFilter.FILTER_REJECT;
+    if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+    return NodeFilter.FILTER_ACCEPT;
+  }
+
+  // Scans a single node added/changed by a mutation -- same text-node filtering
+  // as scanPage, just scoped to one subtree instead of the whole body.
+  function scanNode(root) {
+    if (root.nodeType === Node.TEXT_NODE) {
+      if (acceptTextNode(root) === NodeFilter.FILTER_ACCEPT) processTextNode(root);
+      return;
+    }
+    if (root.nodeType !== Node.ELEMENT_NODE) return;
+    if (SKIP_TAGS.has(root.tagName) || root.classList.contains(BADGE_CLASS)) return;
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: acceptTextNode });
+    const nodes = [];
+    let n;
+    while ((n = walker.nextNode())) nodes.push(n);
+    nodes.forEach(processTextNode);
+  }
+
+  // Mutation callbacks run as microtasks, ahead of the next paint -- doing the
+  // treewalk/matching work inline there blocks rendering on sites with heavy
+  // DOM churn (ads, lazy images, live price widgets). Collect touched nodes and
+  // flush once per macrotask instead, so bursts of mutations collapse into one
+  // scan pass and the page gets to render in between.
+  let pending = null;
+  let flushTimer = null;
+
+  function flushPending() {
+    flushTimer = null;
+    const nodes = pending;
+    pending = null;
+    nodes.forEach(scanNode);
+  }
+
+  function queueNode(node) {
+    if (!pending) pending = new Set();
+    pending.add(node);
+    if (!flushTimer) flushTimer = setTimeout(flushPending, 0);
+  }
+
+  function startObserving() {
+    if (observer) return;
+    observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        m.addedNodes.forEach(queueNode);
+        if (m.type === 'characterData') queueNode(m.target);
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+
+  function stopObserving() {
+    if (!observer) return;
+    observer.disconnect();
+    observer = null;
+    if (flushTimer) clearTimeout(flushTimer);
+    flushTimer = null;
+    pending = null;
   }
 
   function scanPage() {
     if (!cpuIndex) cpuIndex = buildIndex();
 
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-      acceptNode(n) {
-        const parent = n.parentElement;
-        if (!parent) return NodeFilter.FILTER_REJECT;
-        if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
-        if (parent.closest(`.${BADGE_CLASS}`)) return NodeFilter.FILTER_REJECT;
-        if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
-        return NodeFilter.FILTER_ACCEPT;
-      },
-    });
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode: acceptTextNode });
 
     const nodes = [];
     let n;
     while ((n = walker.nextNode())) nodes.push(n);
     nodes.forEach(processTextNode);
     scanned = true;
+    startObserving();
   }
 
   function unscanPage() {
+    stopObserving();
     document.querySelectorAll(`.${BADGE_CLASS}`).forEach((el) => el.remove());
     scanned = false;
   }
