@@ -1,5 +1,7 @@
 # CPU Rank Finder (PassMark)
 
+![Demo](demo.png)
+
 Chrome extension (Manifest V3) that scans a webpage for CPU model names (e.g.
 "Intel i5 1235U", "Ryzen 7 7840HS") and appends their PassMark CPU Benchmark
 rank inline, in red.
