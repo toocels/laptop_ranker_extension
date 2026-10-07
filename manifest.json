@@ -8,6 +8,7 @@
   "action": {
     "default_title": "CPU Rank Finder - click to toggle on this site"
   },
+  "options_page": "options.html",
   "background": {
     "service_worker": "background.js"
   },

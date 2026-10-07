@@ -15,6 +15,9 @@ The dataset is a hardcoded snapshot of
 3. Click **Load unpacked**, select this folder
 4. Click the extension's toolbar icon on any site to toggle scanning for
    that site (click again to turn off)
+5. Right-click the icon -> **Options** (or open the extension's Details page
+   in `chrome://extensions`) to see every site you've enabled and remove any
+   of them
 
 ## How matching works
 
@@ -35,14 +38,13 @@ The dataset is a hardcoded snapshot of
   via `chrome.storage.local`.
 - `background.js` -- toolbar icon click toggles the scan on/off for the
   active tab's site.
+- `options.html`/`options.js` -- lists enabled sites, with a Remove button
+  per site.
 - `test_matcher.mjs` -- `node test_matcher.mjs`, self-check for the
   matching logic.
 
 ## Limitations
 
-- One-time scan on enable/page-load -- no `MutationObserver`, so CPU names
-  injected into the DOM afterwards (SPA navigation, infinite scroll) aren't
-  picked up until you re-toggle.
 - Apple M-series rarely matches: PassMark names them with core-count/clock
   suffixes (e.g. `Apple M2 Pro 10 Core 3480 MHz`), which plain text like
   "M2 Pro" can't disambiguate.

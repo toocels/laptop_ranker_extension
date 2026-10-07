@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CPU Rank Finder - Enabled Sites</title>
+<style>
+  body { font: 14px system-ui, sans-serif; margin: 16px; min-width: 280px; }
+  h1 { font-size: 15px; margin: 0 0 12px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; }
+  button { border: none; background: #d00000; color: #fff; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
+  button:hover { background: #a00000; }
+  #empty { color: #666; }
+</style>
+</head>
+<body>
+<h1>Sites with scanning enabled</h1>
+<ul id="list"></ul>
+<p id="empty" hidden>No sites enabled yet -- click the toolbar icon on a site to enable it.</p>
+<script src="options.js"></script>
+</body>
+</html>
