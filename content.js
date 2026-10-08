@@ -5,7 +5,9 @@
   const STORAGE_KEY = 'cpuRankEnabledSites';
   const BADGE_CLASS = 'cpu-rank-ext-badge';
   const STOPWORDS = new Set(['intel', 'amd', 'apple', 'core', 'processor', 'cpu']);
-  const MAX_WINDOW = 4;
+  // 6 covers the longest common real-world names, e.g. "Ryzen AI 7 PRO 350"
+  // (5 significant tokens) and "Ryzen AI 9 HX PRO 370" (6).
+  const MAX_WINDOW = 6;
   // Marketing filler that sits between the real model tokens on e-commerce listings,
   // e.g. "Core i5 13th Gen 13420H" or "Core 5 Series 3 315" -- stripped so the
   // remaining tokens ("i5","13420H" / "5","315") sit adjacent for window matching.

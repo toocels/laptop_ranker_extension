@@ -8,7 +8,7 @@ const jsonMatch = src.match(/self\.CPU_DATA = (\[.*\]);/);
 const self = { CPU_DATA: JSON.parse(jsonMatch[1]) };
 
 const STOPWORDS = new Set(['intel', 'amd', 'apple', 'core', 'processor', 'cpu']);
-const MAX_WINDOW = 4;
+const MAX_WINDOW = 6;
 const ORDINAL_RE = /^\d{1,2}(st|nd|rd|th)$/;
 const GEN_RE = /^gen(eration)?$/;
 
@@ -90,6 +90,10 @@ assert.ok(m && m.name === 'Intel Core i5-13420H' && m.rank === 1255, `i5 13th Ge
 
 m = findFirstMatch('ASUS Vivobook 14 (2025) with Office 2024 + M365 Basic*, Backlit Keyboard, Intel Core Ultra 5 225H - (16 GB/512 GB SSD/Windows 11 Home)');
 assert.ok(m && m.name === 'Intel Core Ultra 5 225H' && m.rank === 647, `Core Ultra 5 225H -> ${JSON.stringify(m)}`);
+
+// 5+ significant tokens (brand prefix dropped): broke the old MAX_WINDOW=4.
+m = findFirstMatch('Laptop with AMD Ryzen™ AI 7 PRO 350 Processor (2.00 GHz up to 5.00 GHz)');
+assert.ok(m && m.name === 'AMD Ryzen AI 7 PRO 350', `Ryzen AI 7 PRO 350 -> ${JSON.stringify(m)}`);
 
 // Non-ASCII CPU names (e.g. "天玑900") must not be indexed: normalize() strips
 // their script entirely, which would otherwise collapse the name to a bare
